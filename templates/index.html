@@ -42,7 +42,6 @@
                             {% for key, value in endpoints.items() %}
                                 <a href="{{ url_for('show_form', endpoint_type=key) }}" class="list-group-item list-group-item-action">
                                     <strong>{{ key|title }}</strong>
-                                    <small class="text-muted d-block">{{ value }}</small>
                                 </a>
                             {% endfor %}
                         </div>
