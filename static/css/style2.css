@@ -1,0 +1,128 @@
+/* Main Background & Body */
+body {
+    background: linear-gradient(to right, #8A2BE2, #1E90FF);
+    color: #fff;
+    padding-top: 30px;
+}
+
+/* Main Title */
+.title {
+    text-align: center;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: #ffdd57;
+    text-shadow: 2px 2px 10px #ff6600;
+}
+
+/* Breadcrumbs */
+.breadcrumb {
+    background-color: #333;
+    border-radius: 10px;
+    padding: 10px 15px;
+}
+
+.breadcrumb-item a {
+    color: #ffdd57;
+    text-decoration: none;
+}
+
+.breadcrumb-item.active {
+    color: #fff; /* Make Result white */
+}
+
+/* Custom Card Styles */
+.custom-card {
+    background: #000;
+    border: 2px solid #ffdd57;
+    box-shadow: 0 0 10px #ffdd57;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.custom-header {
+    background: #1e90ff;
+    color: #fff;
+    text-align: center;
+    font-size: 18px;
+    padding: 12px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+/* CodeMirror Editor */
+.CodeMirror {
+    height: 400px;
+    border: 1px solid #ffdd57;
+    border-radius: 8px;
+    background: #1c1c1c;
+    color: #fff;
+}
+
+/* CodeMirror Styles for Text */
+.CodeMirror-lines {
+    color: #fff !important;  /* White text in CodeMirror */
+}
+
+/* Textarea Style */
+textarea {
+    background-color: #1c1c1c;
+    color: #fff; /* White text */
+    border: 2px solid #ffdd57;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+/* Buttons Styling */
+.btn-primary {
+    background-color: #ffdd57;
+    border: none;
+    color: #333;
+    padding: 10px 20px;
+    font-weight: bold;
+    border-radius: 8px;
+    transition: background 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.btn-secondary {
+    background-color: #333;
+    color: #fff;
+    padding: 10px 20px;
+    font-weight: bold;
+    border-radius: 8px;
+}
+
+.btn-secondary:hover {
+    background-color: #555;
+    color: #fff;
+}
+
+/* Highlighted Text Areas */
+textarea:focus {
+    border-color: #ffc107;
+    box-shadow: 0 0 8px #ffdd57;
+    outline: none;
+}
+
+/* Request & Response Card Height Adjustment */
+.response-container .CodeMirror {
+    height: 400px;
+}
+
+/* Scrollbar Styling */
+.CodeMirror-scroll {
+    background-color: #1c1c1c;
+    border-radius: 8px;
+}
+
+/* Icons Styling */
+.breadcrumb-item i {
+    margin-right: 5px;
+    color: #ffdd57;
+}

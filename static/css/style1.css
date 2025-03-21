@@ -1,0 +1,133 @@
+/* Import Fun Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@500&family=Poppins:wght@400;600&display=swap');
+
+body {
+    margin: 0;
+    padding: 0;
+    background: #1a1a2e;
+    font-family: 'Poppins', sans-serif;
+    overflow: hidden;
+}
+
+/* Background Animation with Galaxy Glow */
+.background {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, #0f0c29, #302b63, #24243e);
+    animation: backgroundGlow 10s infinite alternate;
+    z-index: -1;
+}
+
+@keyframes backgroundGlow {
+    0% {
+        background: radial-gradient(circle, #0f0c29, #302b63, #24243e);
+    }
+    100% {
+        background: radial-gradient(circle, #302b63, #0f0c29, #24243e);
+    }
+}
+
+/* Neon Glassmorphic Form Container */
+.form-container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 15px 35px rgba(255, 255, 255, 0.1);
+    max-width: 600px;
+    margin: 80px auto;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Fun Form Title */
+.form-title {
+    font-size: 2rem;
+    font-family: 'Orbitron', sans-serif;
+    color: #ff6b6b;
+    text-shadow: 0 0 10px #ff6b6b, 0 0 20px #f39c12;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+/* Fun Form Labels */
+label {
+    font-weight: bold;
+    color: #f1c40f;
+    font-size: 1rem;
+}
+
+/* Playful Input Fields */
+input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    margin-top: 8px;
+    margin-bottom: 18px;
+    border: 2px solid #f39c12;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Hover Effect for Inputs */
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border: 2px solid #ff6b6b;
+    box-shadow: 0 0 12px #ff6b6b;
+}
+
+/* Cool Submit Button with Bounce */
+.submit-btn {
+    background: linear-gradient(135deg, #ff6b6b, #f39c12);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    padding: 12px 20px;
+    text-align: center;
+    display: block;
+    width: 100%;
+    font-size: 1.2rem;
+    font-family: 'Press Start 2P', cursive;
+    letter-spacing: 1.5px;
+    box-shadow: 0 0 12px #ff6b6b;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Hover Animation for Button */
+.submit-btn:hover {
+    transform: translateY(-4px);
+    background: linear-gradient(135deg, #f39c12, #ff6b6b);
+    box-shadow: 0 0 25px #ff6b6b, 0 0 30px #f39c12;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .form-container {
+        padding: 20px;
+    }
+
+    .form-title {
+        font-size: 1.5rem;
+    }
+}
+/* Breadcrumb and Title Fix */
+.breadcrumb-item a {
+    color: #ffffff !important;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.breadcrumb-item.active {
+    color: #ffffff !important;
+    font-weight: bold;
+}
+
+/* Page Title Fix */
+h1 {
+    color: #ffffff !important;
+    font-size: 2.2rem;
+    font-weight: bold;
+    text-shadow: 0 0 20px rgba(0, 255, 255, 0.9);
+}
