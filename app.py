@@ -1,16 +1,17 @@
-from flask import Flask, request, render_template, jsonify, redirect, url_for, flash
-from flask_cors import CORS  # Import CORS
+from flask import Flask, request, render_template, jsonify, redirect, url_for, flash, send_file
+from flask_cors import CORS
 import requests
 import json
 import os
+import csv
 
 app = Flask(__name__)
 app.secret_key = "ibm_environmental_intelligence_app_secret"
-CORS(app, resources={r"/*": {"origins": "*"}})  # Enable CORS for all routes
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # IBM Environmental Intelligence API credentials
 API_KEY = "PHXMWwqmY3vOemKDLf2cDNFbCviqKiBYRTmVNUFT44qYZQ"
-BEARER_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjJENDA5QTlBNjc1MzhBOTU0QUFDRjMyMkU1NjZDNENGOUZENkNBMzIiLCJ0eXAiOiJhdCtqd3QiLCJ4NXQiOiJMVUNhbW1kVGlwVktyUE1pNVdiRXo1X1d5akkifQ.eyJuYmYiOjE3NDI1NjE0MzcsImV4cCI6MTc0MjU2NTAzNywiaXNzIjoiaHR0cHM6Ly9hdXRoLWIyYi10d2MuaWJtLmNvbSIsImF1ZCI6WyJhY2Nlc3M6YWdybyIsImlibS1wYWlycy1hcGkiLCJwaG9lbml4LWFwaSJdLCJjbGllbnRfaWQiOiJpYm0tYWdyby1hcGkiLCJzdWIiOiI0MDc0YjQ2MS1mZDVhLTQxMjQtOTQxNy0yYTRmZDc3ZDEyZWEiLCJhdXRoX3RpbWUiOjE3NDI1NjE0MzcsImlkcCI6ImxvY2FsIiwiYXBwbGljYXRpb25zIjoiW1wiQUdST19BUElcIixcIkNBUkJPTl9BUElcIl0iLCJyb2xlcyI6Ilt7XCJhcHBsaWNhdGlvbklkXCI6XCJDQVJCT05fQVBJXCIsXCJyb2xlc1wiOltcIkFETUlOXCJdfV0iLCJhY2NvdW50IjoiOGIxNjA3YmMtODhkMC00ODU2LWI3NDUtMWNhMWQzNjBhMzEzIiwiYWNjb3VudF9uYW1lIjoiZWktcHJldmlldy12Mi03NzA2MmUxZi0wM2I3LTQ1ODAtYWJiYS01MjI3OTdjNjJhZDkiLCJzY29wZSI6WyJjdXN0b20ucHJvZmlsZSIsImVtYWlsIiwib3BlbmlkIiwicHJvZmlsZSIsImFjY2VzczphZ3JvIiwiaWJtLXBhaXJzLWFwaSIsInBob2VuaXgtYXBpIl0sImFtciI6WyJhcGlrZXkiXX0.NT9_6JHcSuY7Jki1Ft8rtDIy8kaKeeVLsiwdE6nsMUhVP0eLZs2n8hrLVZhD7Y3ECo0UILXZjLO9MFicrDhshRT65WtsHPcyXj50uQbH14yuI4GIp8gZsv2L3XMwl20jHYHXqw08VfKT6TxXBrjXtz4cVXZsA5bzp0bii9ivLuROLWJHB5aemkgzIwUBQSDC6NF3uEP6st-q159YW79ouzQXAbrsA0-GcjWCt09mqkYFb0pj28_lo8B5ocB-Uew0EwxmYfo31gzWtYctUw284J4M0dYf9w3UWUsaPkvjM-1jT6LvULEI9IYHOVYRfHBYSeMDb0oGfPsiLD3Ec2eKtw"  # Replace with a valid token
+BEARER_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjJENDA5QTlBNjc1MzhBOTU0QUFDRjMyMkU1NjZDNENGOUZENkNBMzIiLCJ0eXAiOiJhdCtqd3QiLCJ4NXQiOiJMVUNhbW1kVGlwVktyUE1pNVdiRXo1X1d5akkifQ.eyJuYmYiOjE3NDI1Njk0OTEsImV4cCI6MTc0MjU3MzA5MSwiaXNzIjoiaHR0cHM6Ly9hdXRoLWIyYi10d2MuaWJtLmNvbSIsImF1ZCI6WyJhY2Nlc3M6YWdybyIsImlibS1wYWlycy1hcGkiLCJwaG9lbml4LWFwaSJdLCJjbGllbnRfaWQiOiJpYm0tYWdyby1hcGkiLCJzdWIiOiI0MDc0YjQ2MS1mZDVhLTQxMjQtOTQxNy0yYTRmZDc3ZDEyZWEiLCJhdXRoX3RpbWUiOjE3NDI1Njk0OTEsImlkcCI6ImxvY2FsIiwiYXBwbGljYXRpb25zIjoiW1wiQUdST19BUElcIixcIkNBUkJPTl9BUElcIl0iLCJyb2xlcyI6Ilt7XCJhcHBsaWNhdGlvbklkXCI6XCJDQVJCT05fQVBJXCIsXCJyb2xlc1wiOltcIkFETUlOXCJdfV0iLCJhY2NvdW50IjoiOGIxNjA3YmMtODhkMC00ODU2LWI3NDUtMWNhMWQzNjBhMzEzIiwiYWNjb3VudF9uYW1lIjoiZWktcHJldmlldy12Mi03NzA2MmUxZi0wM2I3LTQ1ODAtYWJiYS01MjI3OTdjNjJhZDkiLCJzY29wZSI6WyJjdXN0b20ucHJvZmlsZSIsImVtYWlsIiwib3BlbmlkIiwicHJvZmlsZSIsImFjY2VzczphZ3JvIiwiaWJtLXBhaXJzLWFwaSIsInBob2VuaXgtYXBpIl0sImFtciI6WyJhcGlrZXkiXX0.UQA0sn31qaDP40_JCDImo8No9GO5VM4TmYjjNTvkYp7anQ-e17pbsm8vT252XylfpcSZCPdexbxTBZMbaQX-dEyt6iuGfggCMzpn0-UQ1-uPYpEFbFq8IaIMs5JtZntirLhLZA0lUVO2N7HiWkDAFEZQ5NLf6PyaF5qfzua6NdMhAfiZ5PTywh-71gWFbIQrDpK2wsotGaKiUJi-dcmYi9o1JoQXivIPaYaPmIPd_vZ6Fir6bpB6GIW4s-ywtGT3O6qhOUm4blxEsfsvLOhSQRerSUS5uzUpbFa_Mj8tarkLnxQnfhVjY_LXBFv0DyaHgnGx1LBz4hLaPa8-Mws4Bg"
 BASE_URL = "https://foundation.agtech.ibm.com/v2"
 
 # API endpoints
@@ -21,17 +22,17 @@ API_ENDPOINTS = {
     "transportation": "/carbon/transportation_and_distribution"
 }
 
-# ===============================
+# CSV file for API responses
+CSV_FILE = "api_responses.csv"
+
+# ================================
 # API Health Check Route
-# ===============================
+# ================================
 @app.route('/status')
 def check_api_status():
     """Check API Status"""
     status_url = f"{BASE_URL}/status"
-    headers = {
-        'Accept': 'application/json',
-        'apikey': API_KEY
-    }
+    headers = {'Accept': 'application/json', 'apikey': API_KEY}
 
     try:
         response = requests.get(status_url, headers=headers)
@@ -43,17 +44,17 @@ def check_api_status():
         return jsonify({"error": f"API request failed: {str(e)}"}), 500
 
 
-# ===============================
+# ================================
 # Home Route
-# ===============================
+# ================================
 @app.route('/')
 def index():
     return render_template('index.html', endpoints=API_ENDPOINTS)
 
 
-# ===============================
+# ================================
 # Form Route
-# ===============================
+# ================================
 @app.route('/form/<endpoint_type>')
 def show_form(endpoint_type):
     """Show form based on endpoint type"""
@@ -61,32 +62,32 @@ def show_form(endpoint_type):
         flash("Invalid endpoint type")
         return redirect(url_for('index'))
 
-    # Sample JSON templates
-    templates = {
+    # Sample JSON templates (kept for user modification)
+    TEMPLATES = {
         "stationary": {
   "customID": {
-    "id": "3942881448427520"
+    "id": "1705630062608384"
   },
   "onBehalfOfClient": {
-    "companyId": "595774406656000",
-    "companyName": "Rachel Moran"
+    "companyId": "2652286536908800",
+    "companyName": "Rebecca Vasquez"
   },
   "organisation": {
-    "departmentId": "2230610022105088",
-    "departmentName": "Scott Green"
+    "departmentId": "6477322324541440",
+    "departmentName": "Henrietta Park"
   },
   "requestType": "ACTUAL",
   "location": {
-    "country": "Sri Lanka",
-    "stateProvince": "YT",
-    "zipPostCode": "X3S 8K5",
-    "city": "Vownijtir"
+    "country": "Dominican Republic",
+    "stateProvince": "QC",
+    "zipPostCode": "G6T 1F9",
+    "city": "Bickirjo"
   },
   "site": {
-    "siteId": "3153998422999040",
-    "siteName": "Catherine Chambers",
-    "buildingId": "8817844590477312",
-    "buildingName": "Lora Reed"
+    "siteId": "3247133727653888",
+    "siteName": "Thomas Keller",
+    "buildingId": "380135630962688",
+    "buildingName": "Julia Bell"
   },
   "timePeriod": {
     "year": 2021,
@@ -102,28 +103,28 @@ def show_form(endpoint_type):
 },
         "fugitive": {
   "customID": {
-    "id": "6362669906919424"
+    "id": "6211504336535552"
   },
   "onBehalfOfClient": {
-    "companyId": "2101010115854336",
-    "companyName": "Bryan Wagner"
+    "companyId": "708157594664960",
+    "companyName": "Alan Wolfe"
   },
   "organisation": {
-    "departmentId": "4478310591496192",
-    "departmentName": "Catherine Welch"
+    "departmentId": "5920042151575552",
+    "departmentName": "Jimmy Barnett"
   },
   "requestType": "ACTUAL",
   "location": {
-    "country": "Burkina Faso",
-    "stateProvince": "NU",
-    "zipPostCode": "C4A 8N9",
-    "city": "Givevuole"
+    "country": "Guinea-Bissau",
+    "stateProvince": "AB",
+    "zipPostCode": "L0N 2R9",
+    "city": "Sopemuv"
   },
   "site": {
-    "siteId": "6581270588948480",
-    "siteName": "Effie Hunt",
-    "buildingId": "5048841520807936",
-    "buildingName": "Emily Soto"
+    "siteId": "632932941168640",
+    "siteName": "Hunter Parks",
+    "buildingId": "4197294742175744",
+    "buildingName": "Harry Ryan"
   },
   "timePeriod": {
     "year": 2021,
@@ -151,28 +152,28 @@ def show_form(endpoint_type):
 },
         "mobile": {
   "customID": {
-    "id": "3199472771268608"
+    "id": "2533309844291584"
   },
   "onBehalfOfClient": {
-    "companyId": "2919865377619968",
-    "companyName": "Nannie Gill"
+    "companyId": "6828322780610560",
+    "companyName": "Sam Sims"
   },
   "organisation": {
-    "departmentId": "1769042236932096",
-    "departmentName": "Iva Grant"
+    "departmentId": "3123310890057728",
+    "departmentName": "Kyle Webster"
   },
   "requestType": "ACTUAL",
   "location": {
-    "country": "Saint Kitts and Nevis",
-    "stateProvince": "AB",
-    "zipPostCode": "P6Z 7J9",
-    "city": "Bimbanzid"
+    "country": "French Southern Territories",
+    "stateProvince": "NL",
+    "zipPostCode": "M3G 3H8",
+    "city": "Ligenah"
   },
   "site": {
-    "siteId": "4785532812918784",
-    "siteName": "Landon Lynch",
-    "buildingId": "1579188448395264",
-    "buildingName": "Daisy Fleming"
+    "siteId": "470430345330688",
+    "siteName": "Isaac Jimenez",
+    "buildingId": "8042437509382144",
+    "buildingName": "Jorge Kelly"
   },
   "timePeriod": {
     "year": 2021,
@@ -187,28 +188,28 @@ def show_form(endpoint_type):
 },
         "transportation": {
   "customID": {
-    "id": "6546727051984896"
+    "id": "1146615565910016"
   },
   "onBehalfOfClient": {
-    "companyId": "1323470287798272",
-    "companyName": "Jackson Todd"
+    "companyId": "878518089023488",
+    "companyName": "Virginia Black"
   },
   "organisation": {
-    "departmentId": "705312396935168",
-    "departmentName": "Blake Oliver"
+    "departmentId": "8716975228321792",
+    "departmentName": "Paul Sparks"
   },
   "requestType": "ACTUAL",
   "location": {
-    "country": "South Georgia and the South Sandwich Islands",
-    "stateProvince": "NU",
-    "zipPostCode": "S1D 9G5",
-    "city": "Tehentu"
+    "country": "Canada",
+    "stateProvince": "YT",
+    "zipPostCode": "R2E 8N2",
+    "city": "Ewpihedi"
   },
   "site": {
-    "siteId": "3622584685953024",
-    "siteName": "Edith Kelly",
-    "buildingId": "3289033870409728",
-    "buildingName": "Mae Dean"
+    "siteId": "5694471998013440",
+    "siteName": "Randy Barker",
+    "buildingId": "7568795975548928",
+    "buildingName": "Ruby Roberson"
   },
   "timePeriod": {
     "year": 2021,
@@ -221,19 +222,19 @@ def show_form(endpoint_type):
     "totalWeightOfFreight": "100",
     "numberOfPassengers": 15,
     "unitOfMeasurement": "Tonne Mile",
-    "fuelUsed": "zumz",
-    "fuelAmount": "2856980838350848",
-    "unitOfFuelAmount": "5942904646270976"
+    "fuelUsed": "lahnajsizet",
+    "fuelAmount": "5396432412475392",
+    "unitOfFuelAmount": "2471533194772480"
   }
 }
     }
 
-    return render_template('form.html', endpoint_type=endpoint_type, template_json=json.dumps(templates[endpoint_type], indent=2))
+    return render_template('form.html', endpoint_type=endpoint_type, template_json=json.dumps(TEMPLATES[endpoint_type], indent=2))
 
 
-# ===============================
+# ================================
 # Submit Form and Make API Call
-# ===============================
+# ================================
 @app.route('/submit/<endpoint_type>', methods=['POST'])
 def submit_form(endpoint_type):
     """Submit form and call API"""
@@ -241,7 +242,7 @@ def submit_form(endpoint_type):
         return jsonify({"error": "Invalid endpoint type"}), 400
 
     try:
-        # Get the JSON data from the form
+        # Get JSON data from form
         json_data = request.form.get('json_data', '{}')
         data = json.loads(json_data)
 
@@ -253,33 +254,19 @@ def submit_form(endpoint_type):
             'Authorization': f'Bearer {BEARER_TOKEN}'
         }
 
-        # Construct the full API URL
+        # Construct API URL
         api_url = f"{BASE_URL}{API_ENDPOINTS[endpoint_type]}"
 
-        # Debugging: Print request details
-        print("Request URL:", api_url)
-        print("Headers:", headers)
-        print("Payload:", json.dumps(data, indent=2))
-
-        # Make the API request
+        # Make API request
         response = requests.post(api_url, json=data, headers=headers)
 
-        # Debugging: Print API response
-        print("Response Status:", response.status_code)
-        print("Response Text:", response.text)
-
-        # Check if the request was successful
         if response.status_code in (200, 201, 202):
-            try:
-                result = response.json()
-            except json.JSONDecodeError:
-                result = {"raw_response": response.text}
+            result = response.json()
         else:
-            result = {
-                "error": "API request failed",
-                "status_code": response.status_code,
-                "response": response.text
-            }
+            result = {"error": "API request failed", "status_code": response.status_code, "response": response.text}
+
+        # Save response to CSV
+        save_response_to_csv(endpoint_type, data, result)
 
         return render_template('result.html', endpoint_type=endpoint_type, request_data=json.dumps(data, indent=2), result=json.dumps(result, indent=2))
 
@@ -289,8 +276,47 @@ def submit_form(endpoint_type):
         return jsonify({"error": str(e)}), 500
 
 
-# ===============================
+# ================================
+# Save API Response to CSV
+# ================================
+from datetime import datetime
+
+def save_response_to_csv(endpoint_type, request_data, response_data):
+    """Append API response to CSV with timestamp"""
+    file_exists = os.path.isfile(CSV_FILE)
+    with open(CSV_FILE, mode='a', newline='', encoding='utf-8') as csv_file:
+        # Updated fieldnames to include 'timestamp'
+        fieldnames = ['timestamp', 'endpoint_type', 'request_data', 'response_data']
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+
+        # Write header only if the file is newly created
+        if not file_exists:
+            writer.writeheader()
+
+        # Generate current timestamp
+        current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # Write the new response with timestamp
+        writer.writerow({
+            'timestamp': current_timestamp,
+            'endpoint_type': endpoint_type,
+            'request_data': json.dumps(request_data),
+            'response_data': json.dumps(response_data)
+        })
+
+
+
+# ================================
+# Download CSV Route
+# ================================
+@app.route('/download_csv')
+def download_csv():
+    """Download the API response CSV"""
+    return send_file(CSV_FILE, as_attachment=True, download_name="api_responses.csv")
+
+
+# ================================
 # Run Flask Application
-# ===============================
+# ================================
 if __name__ == '__main__':
     app.run(debug=True)

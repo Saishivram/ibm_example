@@ -42,9 +42,10 @@
                         <textarea id="result_data" class="form-control">{{ result }}</textarea>
                     </div>
                 </div>
-                
-                <!-- Navigation Buttons -->
+
+                <!-- Download CSV Button -->
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('download_csv') }}" class="btn btn-success me-md-2">📥 Download CSV</a>
                     <a href="{{ url_for('show_form', endpoint_type=endpoint_type) }}" class="btn btn-primary me-md-2">🔁 Submit Another Request</a>
                     <a href="{{ url_for('index') }}" class="btn btn-secondary">🏡 Back to Home</a>
                 </div>
