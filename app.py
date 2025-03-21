@@ -1,14 +1,16 @@
 from flask import Flask, request, render_template, jsonify, redirect, url_for, flash
+from flask_cors import CORS  # Import CORS
 import requests
 import json
 import os
 
 app = Flask(__name__)
 app.secret_key = "ibm_environmental_intelligence_app_secret"
+CORS(app, resources={r"/*": {"origins": "*"}})  # Enable CORS for all routes
 
 # IBM Environmental Intelligence API credentials
 API_KEY = "PHXMWwqmY3vOemKDLf2cDNFbCviqKiBYRTmVNUFT44qYZQ"
-BEARER_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjJENDA5QTlBNjc1MzhBOTU0QUFDRjMyMkU1NjZDNENGOUZENkNBMzIiLCJ0eXAiOiJhdCtqd3QiLCJ4NXQiOiJMVUNhbW1kVGlwVktyUE1pNVdiRXo1X1d5akkifQ.eyJuYmYiOjE3NDI1NTMyMzQsImV4cCI6MTc0MjU1NjgzNCwiaXNzIjoiaHR0cHM6Ly9hdXRoLWIyYi10d2MuaWJtLmNvbSIsImF1ZCI6WyJhY2Nlc3M6YWdybyIsImlibS1wYWlycy1hcGkiLCJwaG9lbml4LWFwaSJdLCJjbGllbnRfaWQiOiJpYm0tYWdyby1hcGkiLCJzdWIiOiI0MDc0YjQ2MS1mZDVhLTQxMjQtOTQxNy0yYTRmZDc3ZDEyZWEiLCJhdXRoX3RpbWUiOjE3NDI1NTMyMzQsImlkcCI6ImxvY2FsIiwiYXBwbGljYXRpb25zIjoiW1wiQUdST19BUElcIixcIkNBUkJPTl9BUElcIl0iLCJyb2xlcyI6Ilt7XCJhcHBsaWNhdGlvbklkXCI6XCJDQVJCT05fQVBJXCIsXCJyb2xlc1wiOltcIkFETUlOXCJdfV0iLCJhY2NvdW50IjoiOGIxNjA3YmMtODhkMC00ODU2LWI3NDUtMWNhMWQzNjBhMzEzIiwiYWNjb3VudF9uYW1lIjoiZWktcHJldmlldy12Mi03NzA2MmUxZi0wM2I3LTQ1ODAtYWJiYS01MjI3OTdjNjJhZDkiLCJzY29wZSI6WyJjdXN0b20ucHJvZmlsZSIsImVtYWlsIiwib3BlbmlkIiwicHJvZmlsZSIsImFjY2VzczphZ3JvIiwiaWJtLXBhaXJzLWFwaSIsInBob2VuaXgtYXBpIl0sImFtciI6WyJhcGlrZXkiXX0.bxmQiJKMoDCDzV7_ixg_9jznSY1vesrAIqso2qHDIeG0x-I0tWOskAvELJ7dh5VSlvQlDb55sN9kn0cjq7eiRn5Fpi0p6e8OBvDeaLwcXLtlWuvRcfpk_ghMmfUuNwXxdby27oF4AAJY8uoEPQQZrH0OAIVkid3E-29Ekox7ZPPMA5aHei4VKlkwTIlhfSmsBoV_Xy87puFLM9utkpJ3EoVMxKEOD9aAOylIZ0o3Y1632hwjlc4LoIMEC6VW91WdmZF6_MiMKLJg47WGUd-uFz2-jmA1G84_SYFFrT_M8uYT7Z4ZnXsnAJ_ryRUgAo9zCvUVqMwep4PYl7cdTxlUug"
+BEARER_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjJENDA5QTlBNjc1MzhBOTU0QUFDRjMyMkU1NjZDNENGOUZENkNBMzIiLCJ0eXAiOiJhdCtqd3QiLCJ4NXQiOiJMVUNhbW1kVGlwVktyUE1pNVdiRXo1X1d5akkifQ.eyJuYmYiOjE3NDI1NTc2NTIsImV4cCI6MTc0MjU2MTI1MiwiaXNzIjoiaHR0cHM6Ly9hdXRoLWIyYi10d2MuaWJtLmNvbSIsImF1ZCI6WyJhY2Nlc3M6YWdybyIsImlibS1wYWlycy1hcGkiLCJwaG9lbml4LWFwaSJdLCJjbGllbnRfaWQiOiJpYm0tYWdyby1hcGkiLCJzdWIiOiI0MDc0YjQ2MS1mZDVhLTQxMjQtOTQxNy0yYTRmZDc3ZDEyZWEiLCJhdXRoX3RpbWUiOjE3NDI1NTc2NTIsImlkcCI6ImxvY2FsIiwiYXBwbGljYXRpb25zIjoiW1wiQUdST19BUElcIixcIkNBUkJPTl9BUElcIl0iLCJyb2xlcyI6Ilt7XCJhcHBsaWNhdGlvbklkXCI6XCJDQVJCT05fQVBJXCIsXCJyb2xlc1wiOltcIkFETUlOXCJdfV0iLCJhY2NvdW50IjoiOGIxNjA3YmMtODhkMC00ODU2LWI3NDUtMWNhMWQzNjBhMzEzIiwiYWNjb3VudF9uYW1lIjoiZWktcHJldmlldy12Mi03NzA2MmUxZi0wM2I3LTQ1ODAtYWJiYS01MjI3OTdjNjJhZDkiLCJzY29wZSI6WyJjdXN0b20ucHJvZmlsZSIsImVtYWlsIiwib3BlbmlkIiwicHJvZmlsZSIsImFjY2VzczphZ3JvIiwiaWJtLXBhaXJzLWFwaSIsInBob2VuaXgtYXBpIl0sImFtciI6WyJhcGlrZXkiXX0.XRWOyiiafodZLzkMNhntZTEud5CX91dJM_laeMFFX30yvn0dnmHnxzqhDXsJZVyEr8bwV8ofBDyb5Xd_UdSFpnc33qEtQA3Vnei1PMPly3Y1_pO-Kfhgu1Cp27nEWQUQIZ5rq6XItre4xXLk6SambhG8HH6VA_iKA1XRwssFt9zwIdAAwojlkTwARHeAJopDogzRIcuXAf7qEq_8b8Fe9NFdo5ASHjGOeaHCuNXIw-t4G0BXfZ7bW1p7lIqFfDHZbcYBd5Suqh_UQNgFOx_NuILla32wztRn8VAdNr9KDQ1mPw852XrGHZR71ln0J7WV1aiRykJj_-0HXEFfOM5BBA"  # Replace with a valid token
 BASE_URL = "https://foundation.agtech.ibm.com/v2"
 
 # API endpoints
@@ -19,43 +21,72 @@ API_ENDPOINTS = {
     "transportation": "/carbon/transportation_and_distribution"
 }
 
+# ===============================
+# API Health Check Route
+# ===============================
+@app.route('/status')
+def check_api_status():
+    """Check API Status"""
+    status_url = f"{BASE_URL}/status"
+    headers = {
+        'Accept': 'application/json',
+        'apikey': API_KEY
+    }
+
+    try:
+        response = requests.get(status_url, headers=headers)
+        if response.status_code == 200:
+            return jsonify({"status": "API is accessible", "response": response.json()}), 200
+        else:
+            return jsonify({"error": "API is not accessible", "status_code": response.status_code, "response": response.text}), 403
+    except requests.RequestException as e:
+        return jsonify({"error": f"API request failed: {str(e)}"}), 500
+
+
+# ===============================
+# Home Route
+# ===============================
 @app.route('/')
 def index():
     return render_template('index.html', endpoints=API_ENDPOINTS)
 
+
+# ===============================
+# Form Route
+# ===============================
 @app.route('/form/<endpoint_type>')
 def show_form(endpoint_type):
+    """Show form based on endpoint type"""
     if endpoint_type not in API_ENDPOINTS:
         flash("Invalid endpoint type")
         return redirect(url_for('index'))
-    
-    # Create sample JSON templates based on the endpoint type
-    # These are simplified examples and should be customized based on IBM's documentation
+
+    # Sample JSON templates
     templates = {
         "stationary": {
   "customID": {
-    "id": "1341298940313600"
+    "id": "3942881448427520"
   },
   "onBehalfOfClient": {
-    "companyId": "3963663115354112",
-    "companyName": "Kathryn Fields"
+    "companyId": "595774406656000",
+    "companyName": "Rachel Moran"
   },
   "organisation": {
-    "departmentId": "5095141542985728",
-    "departmentName": "Mollie Schultz"
+    "departmentId": "2230610022105088",
+    "departmentName": "Scott Green"
   },
   "requestType": "ACTUAL",
   "location": {
-    "country": "Puerto Rico",
+    "country": "Sri Lanka",
     "stateProvince": "YT",
-    "zipPostCode": "A0K 4G6",
-    "city": "Suacelep"
+    "zipPostCode": "X3S 8K5",
+    "city": "Vownijtir"
   },
   "site": {
-    "siteId": "2003616447594496",
-    "siteName": "Richard Nguyen",
-    "buildingId": "6884675171647488",
-    "buildingName": "Philip Goodwin"
+    "siteId": "3153998422999040",
+    "siteName": "Catherine Chambers",
+    "buildingId": "8817844590477312",
+    "buildingName": "Lora Reed"
   },
   "timePeriod": {
     "year": 2021,
@@ -71,28 +102,28 @@ def show_form(endpoint_type):
 },
         "fugitive": {
   "customID": {
-    "id": "7577466644201472"
+    "id": "6362669906919424"
   },
   "onBehalfOfClient": {
-    "companyId": "6298454785523712",
-    "companyName": "Angel Hodges"
+    "companyId": "2101010115854336",
+    "companyName": "Bryan Wagner"
   },
   "organisation": {
-    "departmentId": "1735992104976384",
-    "departmentName": "Belle Horton"
+    "departmentId": "4478310591496192",
+    "departmentName": "Catherine Welch"
   },
   "requestType": "ACTUAL",
   "location": {
-    "country": "Russian Federation",
-    "stateProvince": "YT",
-    "zipPostCode": "G5O 5F9",
-    "city": "Ofmokuw"
+    "country": "Burkina Faso",
+    "stateProvince": "NU",
+    "zipPostCode": "C4A 8N9",
+    "city": "Givevuole"
   },
   "site": {
-    "siteId": "4238989278052352",
-    "siteName": "Randy Arnold",
-    "buildingId": "2104636035039232",
-    "buildingName": "Angel Little"
+    "siteId": "6581270588948480",
+    "siteName": "Effie Hunt",
+    "buildingId": "5048841520807936",
+    "buildingName": "Emily Soto"
   },
   "timePeriod": {
     "year": 2021,
@@ -120,28 +151,28 @@ def show_form(endpoint_type):
 },
         "mobile": {
   "customID": {
-    "id": "8628876682985472"
+    "id": "3199472771268608"
   },
   "onBehalfOfClient": {
-    "companyId": "7013878609215488",
-    "companyName": "Tommy Schneider"
+    "companyId": "2919865377619968",
+    "companyName": "Nannie Gill"
   },
   "organisation": {
-    "departmentId": "8580177393090560",
-    "departmentName": "Nancy Ferguson"
+    "departmentId": "1769042236932096",
+    "departmentName": "Iva Grant"
   },
   "requestType": "ACTUAL",
   "location": {
-    "country": "Ethiopia",
-    "stateProvince": "NB",
-    "zipPostCode": "R9N 6P3",
-    "city": "Cohirgap"
+    "country": "Saint Kitts and Nevis",
+    "stateProvince": "AB",
+    "zipPostCode": "P6Z 7J9",
+    "city": "Bimbanzid"
   },
   "site": {
-    "siteId": "2237449315024896",
-    "siteName": "Ethel Weber",
-    "buildingId": "8926667875549184",
-    "buildingName": "Lina Moreno"
+    "siteId": "4785532812918784",
+    "siteName": "Landon Lynch",
+    "buildingId": "1579188448395264",
+    "buildingName": "Daisy Fleming"
   },
   "timePeriod": {
     "year": 2021,
@@ -156,28 +187,28 @@ def show_form(endpoint_type):
 },
         "transportation": {
   "customID": {
-    "id": "5071445279375360"
+    "id": "6546727051984896"
   },
   "onBehalfOfClient": {
-    "companyId": "655382647144448",
-    "companyName": "Jason Stokes"
+    "companyId": "1323470287798272",
+    "companyName": "Jackson Todd"
   },
   "organisation": {
-    "departmentId": "3094281365487616",
-    "departmentName": "Elnora Ballard"
+    "departmentId": "705312396935168",
+    "departmentName": "Blake Oliver"
   },
   "requestType": "ACTUAL",
   "location": {
-    "country": "Zimbabwe",
-    "stateProvince": "PE",
-    "zipPostCode": "N9R 3Z8",
-    "city": "Vamdikit"
+    "country": "South Georgia and the South Sandwich Islands",
+    "stateProvince": "NU",
+    "zipPostCode": "S1D 9G5",
+    "city": "Tehentu"
   },
   "site": {
-    "siteId": "7273159032045568",
-    "siteName": "Nathaniel Martinez",
-    "buildingId": "395364999888896",
-    "buildingName": "Luke Doyle"
+    "siteId": "3622584685953024",
+    "siteName": "Edith Kelly",
+    "buildingId": "3289033870409728",
+    "buildingName": "Mae Dean"
   },
   "timePeriod": {
     "year": 2021,
@@ -190,46 +221,58 @@ def show_form(endpoint_type):
     "totalWeightOfFreight": "100",
     "numberOfPassengers": 15,
     "unitOfMeasurement": "Tonne Mile",
-    "fuelUsed": "ufiinokidhepah",
-    "fuelAmount": "2140997402230784",
-    "unitOfFuelAmount": "2161481175007232"
+    "fuelUsed": "zumz",
+    "fuelAmount": "2856980838350848",
+    "unitOfFuelAmount": "5942904646270976"
   }
 }
     }
-    
-    return render_template('form.html', 
-                           endpoint_type=endpoint_type, 
-                           template_json=json.dumps(templates[endpoint_type], indent=2))
 
+    return render_template('form.html', endpoint_type=endpoint_type, template_json=json.dumps(templates[endpoint_type], indent=2))
+
+
+# ===============================
+# Submit Form and Make API Call
+# ===============================
 @app.route('/submit/<endpoint_type>', methods=['POST'])
 def submit_form(endpoint_type):
+    """Submit form and call API"""
     if endpoint_type not in API_ENDPOINTS:
         return jsonify({"error": "Invalid endpoint type"}), 400
-    
+
     try:
         # Get the JSON data from the form
         json_data = request.form.get('json_data', '{}')
         data = json.loads(json_data)
-        
+
         # Prepare headers with authentication
         headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'x-ibm-client-id': API_KEY,
+            'apikey': API_KEY,
             'Authorization': f'Bearer {BEARER_TOKEN}'
         }
-        
+
         # Construct the full API URL
         api_url = f"{BASE_URL}{API_ENDPOINTS[endpoint_type]}"
-        
+
+        # Debugging: Print request details
+        print("Request URL:", api_url)
+        print("Headers:", headers)
+        print("Payload:", json.dumps(data, indent=2))
+
         # Make the API request
         response = requests.post(api_url, json=data, headers=headers)
-        
+
+        # Debugging: Print API response
+        print("Response Status:", response.status_code)
+        print("Response Text:", response.text)
+
         # Check if the request was successful
         if response.status_code in (200, 201, 202):
             try:
                 result = response.json()
-            except:
+            except json.JSONDecodeError:
                 result = {"raw_response": response.text}
         else:
             result = {
@@ -237,16 +280,17 @@ def submit_form(endpoint_type):
                 "status_code": response.status_code,
                 "response": response.text
             }
-        
-        return render_template('result.html', 
-                              endpoint_type=endpoint_type,
-                              request_data=json.dumps(data, indent=2),
-                              result=json.dumps(result, indent=2))
-    
+
+        return render_template('result.html', endpoint_type=endpoint_type, request_data=json.dumps(data, indent=2), result=json.dumps(result, indent=2))
+
     except json.JSONDecodeError:
         return jsonify({"error": "Invalid JSON format"}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+# ===============================
+# Run Flask Application
+# ===============================
 if __name__ == '__main__':
     app.run(debug=True)
