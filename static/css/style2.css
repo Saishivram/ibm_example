@@ -126,3 +126,8 @@ textarea:focus {
     margin-right: 5px;
     color: #ffdd57;
 }
+canvas {
+    width: 100% !important;
+    height: 400px !important;
+}
+
